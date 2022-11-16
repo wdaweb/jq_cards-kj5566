@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    body {
+      background: #000;
+      background-image: url(./ground.png);
+      background-size: 60%;
+      background-repeat: no-repeat;
+      background-position: center 0px;
+
+    }
+
+    .card {
+      width: 110px;
+      height: 160px;
+      position: relative;
+      float: left;
+      top: 3px;
+      left: 46px;
+      margin-right: 52px;
+      margin-bottom: 10px;
+
+      transition: transform 1s;
+      /* 設定子元素在 3D 空間內 */
+      transform-style: preserve-3d;
+    }
+
+    .card-front {
+      width: 100%;
+      height: 100%;
+      background-image: url(./yugioh/1.jpg);
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      position: absolute;
+      /* 設定隱藏背面 */
+      backface-visibility: hidden;
+    }
+
+    .card-back {
+      width: 100%;
+      height: 100%;
+      background-image: url(./yugioh/back.jfif);
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      position: absolute;
+      transform: rotateY(180deg);
+      /* 設定隱藏背面 */
+      backface-visibility: hidden;
+    }
+
+    .card-close {
+      transform: rotateY(180deg);
+    }
+
+    #game {
+      width: 810px;
+      margin: auto;
+    }
+
+    #btn-start {
+      margin: auto;
+      display: block;
+      width: 75px;
+      height: 30px;
+      text-align: center;
+
+    }
+
+    #btn-start:hover {
+      transform: scale(1.5);
+
+
+    }
+
+    p {
+      text-align: center;
+      font-size: 30px;
+      color: white;
+    }
+  </style>
+</head>
+
+<body>
+  <audio src="./music.mp3" autoplay></audio>
+  <input type="button" value="duel" id="btn-start">
+  <p>翻牌次數: <span id="text-lp">0</span>次 </p>
+  <p>剩餘: <span id="text-time">0</span> 秒</p>
+  <div id="game"></div>
+
+
+
+
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.1/jquery.min.js'
+    integrity='sha512-aVKKRRi/Q/YV+4mjoKBsE4x3H+BkegoM/em46NNlCqNTmUYADjBbeNefNxYV7giUp0VxICtqdrbqU7iVaeZNXA=='
+    crossorigin='anonymous'></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+
+    let lp = 0
+
+    let countdown = 0
+
+    let timer = 0
+
+    // 產生卡片
+
+    $('#btn-start').click(function () {
+      $('#game').empty()
+      for (let i = 0; i < 20; i++) {
+        $('#game').append(`
+        <div class="card card-close">
+          <div class="card-front"></div>
+          <div class="card-back"></div>
+        </div>
+      `)
+      }
+      for (let i = 0; i < $('.card').length; i++) {
+        // 決定數字
+        const num = i % ($('.card').length / 2) + 1
+        $('.card').eq(i).find('.card-front').css('background-image', `url(./yugioh/${num}.jpg)`)
+        $('.card').eq(i).attr('data-num', num)
+
+        // 打散
+        const target = Math.round(Math.random() * ($('.card').length - 1))
+        $('.card').eq(target).insertAfter($('.card').eq(i))
+      }
+      // 停用開始按鈕
+      $(this).attr('disabled', true)
+      // 重設
+      lp = 40
+      $('#text-lp').text(lp)
+      countdown = 80
+      $('#text-time').text(countdown)
+      // 開始遊戲
+      timer = setInterval(function () {
+
+        // 倒數
+        countdown--
+        $('#text-time').text(countdown)
+        if (countdown === 0 || lp === 0) {
+          // 停止倒數
+          clearInterval(timer)
+          // 清空
+
+          // 重新啟用開始按鈕
+          $('#btn-start').attr('disabled', false)
+          Swal.fire({
+            icon: 'error',
+            title: '你是',
+            text: '軟腳蝦決鬥者'
+          })
+        }
+
+
+        $('#game').on('click', '.card', function () {
+          // 最多一次翻兩張，且這張牌還沒翻開
+          if ($('.card:not(.card-close)').length < 2 &&
+            $(this).hasClass('card-close') &&
+            !$(this).hasClass('card-ok')
+          ) {
+            $(this).removeClass('card-close')
+
+            lp--
+            $('#text-lp').text(lp)
+
+
+          }
+
+          // 如果翻兩張了
+          if ($('.card:not(.card-close)').length === 2) {
+            // 如果數字一樣
+
+            if ($('.card:not(.card-close)').eq(0).attr('data-num') === $('.card:not(.card-close)').eq(1).attr('data-num')) {
+              // 用 card-ok 標記已完成
+
+              $('.card:not(.card-close)').addClass('card-ok');
+              $('.card:not(.card-close)').fadeTo(1000, 0);
+
+            }
+
+
+            // 不管數字一不一樣都將卡片翻回來
+            setTimeout(() => {
+              $('.card:not(.card-close)').addClass('card-close')
+              if ($('.card-ok').length === $('.card').length) {
+                Swal.fire({
+                  icon: 'success',
+                  title: '恭喜',
+                  text: '恭喜過關'
+
+
+                })
+              }
+            }, 1000)
+          }
+        })
+      }, 1000)
+    })
+
+  </script>
+</body>
+
+</html>
